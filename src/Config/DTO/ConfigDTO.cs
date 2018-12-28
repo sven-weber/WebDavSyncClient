@@ -6,7 +6,7 @@ namespace WebDavSync.Config.DTO
 
     public class ConfigDTO
     {
-        public string _comment = "The time in seconds after which a server sync will be performed. Client side changes will be published directly."; 
+        public string _comment = "The time in seconds after which a synchronisation will be performed."; 
 
         [BiggerThanZero]
         public int ReoccurenceTime {get; set;} = 300; 
