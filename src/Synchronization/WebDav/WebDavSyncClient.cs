@@ -107,6 +107,12 @@ namespace WebDavSync.Synchronization.WebDav
                 {
                     _logger.Debug("Deleting remote resource " + dstUri + " was successfull"); 
                     return true;
+                } else if (res.StatusCode == 404)
+                {
+                    //In case a not found it returned -> The ressource has allready bin
+                    //deleted, therefore deleting the Ressource was successfull
+                    _logger.Debug("Remote ressource " + dstUri + " has allready been deleted. Return success.");
+                    return true; 
                 } else 
                 {
                     _logger.Error("Deleting resource" + dstUri + " failed!"); 
