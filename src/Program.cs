@@ -17,6 +17,7 @@ namespace WebDavSync
     class Program
     {
         static LogManager _logManager; 
+
         /// <summary>
         /// Main Method, connects to webdav server and handles sync
         /// </summary>
@@ -26,7 +27,13 @@ namespace WebDavSync
             //Check the given parameters
             ParameterType type = CheckParameter(args); 
 
-            bool runDebug = type == ParameterType.Dbg || Debugger.IsAttached ? true : false; 
+            bool runDebug = false;
+            if (type == ParameterType.Dbg ||
+                type == ParameterType.Unknown ||
+                Debugger.IsAttached)
+            {
+                runDebug = true;
+            }
             _logManager = new LogManager(runDebug); 
 
             DataProtectionManager dataProtectionManager = ResolveDataProtector(); 
@@ -40,6 +47,9 @@ namespace WebDavSync
                 case ParameterType.Reconfigure: 
                     Reconfigure(dataProtectionManager, runDebug); 
                     break; 
+                case ParameterType.Unknown:
+                    LogUnknownParameterMessage();
+                    break;
                 default: 
                     Run(type, dataProtectionManager, runDebug); 
                     break; 
@@ -51,7 +61,7 @@ namespace WebDavSync
         /// </summary>
         static void Install() 
         {
-
+            
         }
 
         /// <summary>
@@ -68,6 +78,15 @@ namespace WebDavSync
             {
                 return ActivatorUtilities.CreateInstance<DataProtectionManager>(service);
             }
+        }
+
+        /// <summary>
+        /// Prints a message stating that the given parameter is not known
+        /// </summary>
+        static void LogUnknownParameterMessage() 
+        {
+            ILogger logger = _logManager.GetLogger(LoggerType.Default); 
+            logger.Error("The provided parameter is not known as a valid parameter!");
         }
 
         /// <summary>
@@ -140,11 +159,13 @@ namespace WebDavSync
                    string argument = args[0].ToLower(); 
                    string typeString = type.ToString().ToLower(); 
                    if (argument.Equals("-" + typeString) || 
-                       argument.Equals("-" + typeString)) 
+                       argument.Equals(typeString)) 
                    {
                        return type; 
                    }
                }
+               //No Parameter Type was found -> the provided Parameter is unknown
+               return ParameterType.Unknown;
            }
            return ParameterType.None; 
         }
