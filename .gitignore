@@ -1,3 +1,4 @@
 *.conf
-bin/
-obj/
+src/bin/
+src/obj/
+build/tools/
