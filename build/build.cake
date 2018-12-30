@@ -18,6 +18,7 @@ var configurationDir =  binPath + Directory(configuration) + "/";
 var csProjPath = srcPath + "WebDavSync.csproj";
 
 string projVersion = "";
+string targetFramework = "";
 //////////////////////////////////////////////////////////////////////
 // PREPARATION
 //////////////////////////////////////////////////////////////////////
@@ -37,11 +38,12 @@ Task("Clean")
     CleanDirectory(configurationDir);
 });
 
-Task("ObtainProjectVersion")
+Task("ObtainProjectInformation")
     .IsDependentOn("Clean")
     .Does(() =>
 {
-    Information("Starting Obtaining Project version");
+    Information("Starting Obtaining Project Information");
+    Information("Obtaining project version");
     //Read the xml version from the .csproj file
     XDocument doc = XDocument.Load(csProjPath);
     var element = doc.Descendants().FirstOrDefault(x => x.Name == "PropertyGroup");
@@ -49,20 +51,25 @@ Task("ObtainProjectVersion")
     var suffix = element.Descendants().FirstOrDefault(x => x.Name == "VersionSuffix");
     
     projVersion = prefix.Value;
-    if (!suffix.Value.ToLower().Equals("release")) projVersion += suffix.Value;
+    if (!suffix.Value.ToLower().Equals("release")) projVersion += " " + suffix.Value;
     Information("The following project version has been read from .csproj file: " + projVersion);
+
+    Information("Obtaining target Framework");
+    var framework = element.Descendants().FirstOrDefault(x => x.Name == "TargetFramework");
+    targetFramework = framework.Value;
+    Information("Found the following target framework: " + targetFramework);
 });
 
 //Publish for each Platform that is configurated
 Task("Publish")
-    .IsDependentOn("ObtainProjectVersion")
+    .IsDependentOn("ObtainProjectInformation")
     .DoesForEach(platforms.Keys,
     (targetPlatform) =>
 {
     //Define the Settings
     var settings = new DotNetCorePublishSettings 
     {
-        Framework = "netcoreapp2.1", 
+        Framework = targetFramework, 
         Configuration = configuration,
         OutputDirectory = platforms[targetPlatform],
         SelfContained = true,
@@ -81,6 +88,10 @@ Task("Compress")
 
 Task("Cleanup")
     .IsDependentOn("Compress")
+    .Does(() =>
+    {
+        DeleteDirectory(configurationDir + targetFramework, true);
+    })
     .DoesForEach(platforms.Values,
     (outputDir) => 
 {  
