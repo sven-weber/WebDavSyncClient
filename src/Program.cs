@@ -6,6 +6,7 @@ using System.Reflection;
 using WebDavSync.Config; 
 using WebDavSync.Log; 
 using WebDavSync.Enums; 
+using WebDavSync.Installation;
 using WebDavSync.DataProtection; 
 using WebDavSync.Synchronization; 
 using WebDavSync.Synchronization.WebDav; 
@@ -27,9 +28,11 @@ namespace WebDavSync
             //Check the given parameters
             ParameterType type = CheckParameter(args); 
 
+            //Check if the App should run in Debug Mode or not
             bool runDebug = false;
             if (type == ParameterType.Dbg ||
                 type == ParameterType.Unknown ||
+                type == ParameterType.Install ||
                 Debugger.IsAttached)
             {
                 runDebug = true;
@@ -61,7 +64,8 @@ namespace WebDavSync
         /// </summary>
         static void Install() 
         {
-            
+            InstallationManager helper = new InstallationManager(_logManager.GetLogger(LoggerType.Installer));
+            helper.Install();
         }
 
         /// <summary>
@@ -97,15 +101,11 @@ namespace WebDavSync
             ILogger logger = _logManager.GetLogger(LoggerType.Default); 
 
             ConfigManager configManager = new ConfigManager(logger, dataProtectionManager); 
-            if (!configManager.ConfigFileExists()) 
-            {
-                configManager.CreateEmptyConfig(); 
-            }
-            Configuration config = configManager.ReadConfig(runDebug); 
+            Configuration config = configManager.ReadConfig(runDebug, ReadFileOption.CreateIfNotExists); 
 
             if (config != null) 
             {
-                InstallationHelper helper = new InstallationHelper(logger);
+                InstallationManager helper = new InstallationManager(logger);
                 configManager.Update(helper.Reconfigure(config)); 
             } else 
             {
@@ -129,19 +129,13 @@ namespace WebDavSync
 
             //Get Config 
             ConfigManager configManager = new ConfigManager(logger, protectionManager); 
-            if (configManager.ConfigFileExists()) 
-            {
-                Configuration config = configManager.ReadConfig(runDebug); 
+            //Read the Config -> Create Empty if non exists
+            var config = configManager.ReadConfig(runDebug, ReadFileOption.CreateIfNotExists);
 
-                //Error while Reading or validating the config 
-                if (config == null|| !configManager.Validate(config)) Environment.Exit(1);
+            if (config == null|| !configManager.Validate(config)) Environment.Exit(1);
                 
-                //Execute Sync 
-                ExecuteSync(logger, config);
-            } else 
-            {
-                configManager.CreateEmptyConfig(); 
-            }             
+            //Execute Synchronisation
+            ExecuteSynchronisation(logger, config);          
         }
 
         /// <summary>
@@ -176,7 +170,7 @@ namespace WebDavSync
         /// </summary>
         /// <param name="logger"></param>
         /// <param name="config"></param>
-        static void ExecuteSync(ILogger logger, Configuration config) 
+        static void ExecuteSynchronisation(ILogger logger, Configuration config) 
         {
             SyncManager sync = new SyncManager(_logManager.GetLogger(LoggerType.Default)); 
 

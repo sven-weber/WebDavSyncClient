@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic; 
 using WebDavSync; 
 using WebDavSync.Log; 
+using WebDavSync.Enums;
 using WebDavSync.Config.DTO; 
 using WebDavSync.ReadWriteData; 
 using WebDavSync.DataProtection; 
@@ -100,6 +101,44 @@ namespace WebDavSync.Config
             bool validationRes = ValidateType<T>(instance); 
             if (validationRes) CorrectType<T>(instance); 
             return validationRes; 
+        }
+
+        /// <summary>
+        /// Applies the given File Option -> e.g. creates a File if none exists
+        /// etc.
+        /// </summary>
+        /// <param name="option"></param>
+        private void ApplyReadFileOption(ReadFileOption option)
+        {
+            switch(option)
+            {
+                case ReadFileOption.CreateIfNotExists:
+                    CreateConfigIfNotExists();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Creates an empty configuration file if no other exists at the moment 
+        /// </summary>
+        private void CreateConfigIfNotExists() 
+        {
+            if (!ConfigFileExists()) 
+            {
+                CreateEmptyConfig(); 
+            }
+        }
+        
+        /// <summary>
+        /// Trys to read the given Configuration and applies the given ReadFileOption
+        /// </summary>
+        /// <param name="runDebug"></param>
+        /// <param name="option"></param>
+        /// <returns></returns>
+        public Configuration ReadConfig(bool runDebug, ReadFileOption option) 
+        {
+            ApplyReadFileOption(option);            
+            return ReadConfig(runDebug);
         }
 
         /// <summary>

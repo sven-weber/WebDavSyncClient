@@ -6,7 +6,5 @@ namespace WebDavSync.Log
     {
         Default, 
         Installer
-
-
     }
 }

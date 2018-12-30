@@ -1,42 +1,40 @@
 using System; 
 using System.Security.Principal;  
 using Mono.Posix; 
-using System.Runtime.InteropServices; 
 using WebDavSync.Log; 
 using WebDavSync.Config; 
 using System.Security; 
 
-namespace WebDavSync 
+namespace WebDavSync.Installation
 {
-
-    public class InstallationHelper
+    public class InstallationManager
     {
         private ILogger _logger; 
-        public InstallationHelper(ILogger logger) 
+        public InstallationManager(ILogger logger) 
         {
             _logger = logger; 
         }
 
-        //Checks if the current Users is Administrator
-        private bool IsAdministrator() 
-        {
-            return RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? 
-                new WindowsPrincipal(WindowsIdentity.GetCurrent())
-                .IsInRole(WindowsBuiltInRole.Administrator) :
-                Mono.Unix.Native.Syscall.geteuid() == 0; 
-        }
-
         public void Install() 
         {
-            
+            _logger.Debug("----------------------------------------"); 
+            _logger.Debug("-------- Starting installation ---------");
+            _logger.Debug("----------------------------------------"); 
             //Take a look here for service creation https://stackoverflow.com/questions/22336075/linux-process-into-a-service?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
             // and here https://stackoverflow.com/questions/483781/how-should-i-log-from-a-non-root-debian-linux-daemon?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa
             //for service log files 
-
-
-
-
             
+            IInstaller installer = new InstallerFactory().CreateNewForCurrentSystem();
+
+            //Is Permission is given install, otherwise log error
+            if(installer.IsAdministrator()) 
+            {
+                installer.Install(_logger);
+            } else 
+            {
+                _logger.Error("Please execute the installer with administrative rights.");
+                return;
+            }
         }
 
         /// <summary>
@@ -49,7 +47,24 @@ namespace WebDavSync
             Console.Write("Do you want to configure the general settings? (y/n): "); 
             if (Console.ReadLine().ToLower().Equals("y")) 
             {
-                //Configure generall Information 
+                ReconfigureGeneral(config);   
+            }
+            Console.Write("Do you want to configure the credentials? (y/n): "); 
+            if (Console.ReadLine().ToLower().Equals("y")) 
+            {
+                ReconfigureCredentials(config); 
+            }
+            return config; 
+        }
+
+        /// <summary>
+        /// Configures the general Settings and applies them to the given Configuration 
+        /// object
+        /// </summary>
+        /// <param name="config"></param>
+        private void ReconfigureGeneral(Configuration config)
+        {
+            //Configure generall Information 
                 Console.WriteLine("Configuring genereall settings. Press Enter to keep current values."); 
                 //Reoccurence Time 
                 int newReoccurence = GetIntValue("Reouccrence time in sek (Default 300)"); 
@@ -65,23 +80,26 @@ namespace WebDavSync
                     if (!String.IsNullOrEmpty(RemoteServerUrl)) config.Remote.RemoteServerPath = RemoteServerUrl;
                     if (!String.IsNullOrEmpty(RemoteServerFolder)) config.Remote.RemoteFolderPath = RemoteServerFolder;  
                 }
-            }
-            Console.Write("Do you want to configure the credentials? (y/n): "); 
-            if (Console.ReadLine().ToLower().Equals("y")) 
-            {
-                Console.WriteLine("Configuring credentials. Press Enter to keep current values."); 
-                //Configure credentials 
-                string Username = GetStringValue("Username"); 
-                SecureString password = new CredentialsManager().GetPassword(); 
+        }
 
-                string correct = GetStringValue("confirm? (y/n)"); 
-                if (correct.ToLower().Equals("y")) 
-                {
-                    if (!String.IsNullOrEmpty(Username)) config.Remote.Credentials.UserName = Username; 
-                    if (password != null) config.Remote.Credentials.SecurePassword = password; 
-                }
+        /// <summary>
+        /// Asks for the Credential Configuration and applies it to the given
+        /// Configuration object
+        /// </summary>
+        /// <param name="config"></param>
+        private void ReconfigureCredentials(Configuration config) 
+        {
+            Console.WriteLine("Configuring credentials. Press Enter to keep current values."); 
+            //Configure credentials 
+            string Username = GetStringValue("Username"); 
+            SecureString password = new CredentialsManager().GetPassword(); 
+
+            string correct = GetStringValue("confirm? (y/n)"); 
+            if (correct.ToLower().Equals("y")) 
+            {
+                if (!String.IsNullOrEmpty(Username)) config.Remote.Credentials.UserName = Username; 
+                if (password != null) config.Remote.Credentials.SecurePassword = password; 
             }
-            return config; 
         }
 
         /// <summary>
