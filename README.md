@@ -8,3 +8,9 @@ The plan is to run the synchronisation as a background service in the future.
 ### This Project is in alpha state and in active development
 
 Hopefully I will be able to release the first version soon. 
+
+### Usage
+
+## Building
+
+### Voraussetzungen
