@@ -8,7 +8,7 @@ namespace WebDavSync.ReadWriteData
     {
         /// <summary>
         /// Copies the given Directory to the destination Directory
-        /// Implmentation from MS Doc: https://docs.microsoft.com/de-de/dotnet/standard/io/how-to-copy-directories
+        /// Implementation from MS Doc: https://docs.microsoft.com/de-de/dotnet/standard/io/how-to-copy-directories
         /// </summary>
         /// <param name="sourceDirName"></param>
         /// <param name="destDirName"></param>
@@ -49,6 +49,28 @@ namespace WebDavSync.ReadWriteData
                     string temppath = Path.Combine(destDirName, subdir.Name);
                     CopyDirecory(subdir.FullName, temppath, copySubDirs, logger);
                 }
+            }
+        }
+
+        /// <summary>
+        /// Creates all Directories and Subdirectories in the given Path
+        /// and returns wheter the creation was successfull
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public static bool CreateDirectory(string path)
+        {
+            try 
+            {   
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path); 
+                }
+                return true;
+            } catch 
+            {
+                //Something went wrong 
+                return false;
             }
         }
     }

@@ -30,9 +30,17 @@ namespace WebDavSync.Config
             _protectionManager = protectionManager; 
         }
 
+        /// <summary>
+        /// Returns the path that should be used for the configuration
+        /// -> Configuration File will be stored in the AppData folder
+        /// on each OS 
+        /// </summary>
+        /// <returns></returns>
         private string GetConfigPath() 
         {
-            return Directory.GetCurrentDirectory() + Path.DirectorySeparatorChar + _configFileName; 
+            string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            string appFolder = "WebDavSync";
+            return Path.Combine(appData, appFolder, _configFileName); 
         }
 
         /// <summary>
@@ -226,6 +234,9 @@ namespace WebDavSync.Config
         public bool CreateEmptyConfig() 
         {
             string configPath = GetConfigPath(); 
+            //Try to create Direcotry first
+            if (!FolderManager.CreateDirectory(Path.GetDirectoryName(configPath))) return false;
+            //Read File
             if (!File.Exists(configPath)) 
             {
                 if (_serializer.Serialize(configPath, new ConfigDTO(), Formatting.Indented))

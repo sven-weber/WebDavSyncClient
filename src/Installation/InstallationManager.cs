@@ -26,6 +26,13 @@ namespace WebDavSync.Installation
             
             IInstaller installer = new InstallerFactory().CreateNewForCurrentSystem();
 
+            //If no installer for the current OS is available
+            if (installer == null) 
+            {
+                _logger.Error("No installer for the current OS was found");
+                return;
+            }
+            
             //Is Permission is given install, otherwise log error
             if(installer.IsAdministrator()) 
             {
