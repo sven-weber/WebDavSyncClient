@@ -23,4 +23,4 @@ Its available for Windows, Mac and Linux.
 ### Build Script
 All steps required for the build can be found in the included Cake build script (see [here](https://cakebuild.net)). The script is located in the ".\build" folder and is available for 
 bash ("build.sh") and powershell ("build.ps1"). All requirements for the build will automatically
-be downloaded when the script is executed. The build output will be located at ".\src\bin\Release\".
+be downloaded when the script is executed. The build output will be located at ".\src\bin\Release\"
